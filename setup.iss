@@ -22,7 +22,6 @@ RestartApplications=no
 Source: "C:\Users\melio\Documents\GitHub\miside-zero\dist\installer_updater.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\melio\Documents\GitHub\miside-zero\miside-zero.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\melio\Documents\GitHub\miside-zero\miside-zero.png"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\melio\Documents\GitHub\miside-zero\Logo"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Acceso directo en el escritorio

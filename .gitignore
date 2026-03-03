@@ -2,3 +2,5 @@
 launcher_win.py
 /build
 *.exe
+/game
+AlphaContent.txt

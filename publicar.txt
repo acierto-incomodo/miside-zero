@@ -7,3 +7,5 @@ launcher_win.exe
 ReleaseNotes.txt
 Version.txt
 version_win_launcher.txt
+versionAlphaContent.txt
+AlphaContent.zip

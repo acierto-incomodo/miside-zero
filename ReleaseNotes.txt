@@ -1,7 +1,10 @@
 Cambios
 
-Launcher (v1.0.0):
+Launcher (v1.0.3):
 - NaN
 
-Juego (v1.0.0):
+Juego (v0.72):
+- NaN
+
+AlphaContent (v1.0.0):
 - NaN

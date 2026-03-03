@@ -11,7 +11,7 @@ for %%f in (%folders%) do (
   )
 )
 
-set "files=main.spec theshooterlauncher_deb.deb launcher_win.py launcher_win.spec installer_updater.spec version_win_launcher.txt"
+set "files=main.spec theshooterlauncher_deb.deb launcher_win.py launcher_win.spec installer_updater.spec version_win_launcher.txt AlphaContent.txt"
 for %%f in (%files%) do (
   if exist "%%~f" (
     echo Eliminando archivo: %%f
