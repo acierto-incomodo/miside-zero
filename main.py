@@ -10,18 +10,9 @@ from threading import Thread
 import requests
 from PySide6 import QtCore, QtWidgets, QtGui
 
-# Integración con la barra de tareas de Windows
-if sys.platform.startswith("win"):
-    try:
-        from PySide6.QtWinExtras import QWinTaskbarButton
-    except ImportError:
-        QWinTaskbarButton = None
-else:
-    QWinTaskbarButton = None
-
 # ---------------- CONFIG ------------------
 
-LAUNCHER_VERSION = "1.0.4"
+LAUNCHER_VERSION = "1.0.5"
 
 # Windows build is split into two parts
 BUILD_URL_WIN_PART1 = "https://github.com/acierto-incomodo/miside-zero/releases/latest/download/Build.zip"
@@ -103,9 +94,6 @@ class LauncherWindow(QtWidgets.QWidget):
         self.setMaximumSize(520, 420)
         self.setWindowIcon(QtGui.QIcon.fromTheme("applications-games"))
 
-        self.taskbar_button = None
-        self.taskbar_progress = None
-
         self.setup_ui()
         self.load_extra_content_setting()
         self.refresh_version_display()
@@ -113,16 +101,6 @@ class LauncherWindow(QtWidgets.QWidget):
         self.update_extra_content_ui()
 
         self.on_check()
-
-    def showEvent(self, event):
-        # Este método se llama cuando el widget se muestra.
-        # Es un buen lugar para inicializar cosas que dependen de un "handle" de ventana.
-        super().showEvent(event)
-        if sys.platform.startswith("win") and QWinTaskbarButton and not self.taskbar_button:
-            # Inicializar la integración con la barra de tareas una vez que la ventana se muestra
-            self.taskbar_button = QWinTaskbarButton(self)
-            self.taskbar_button.setWindow(self.windowHandle())
-            self.taskbar_progress = self.taskbar_button.progress()
 
     def setup_ui(self):
         layout = QtWidgets.QVBoxLayout(self)
@@ -313,7 +291,9 @@ class LauncherWindow(QtWidgets.QWidget):
         
         try:
             should_be_enabled = ALPHA_SETTING_FILE.read_text(encoding="utf-8").strip().lower() == "si"
+            self.cb_extra_content.blockSignals(True)
             self.cb_extra_content.setChecked(should_be_enabled)
+            self.cb_extra_content.blockSignals(False)
         except Exception as e:
             print(f"No se pudo leer la configuración de contenido extra: {e}")
             self.cb_extra_content.setChecked(False)
@@ -343,10 +323,6 @@ class LauncherWindow(QtWidgets.QWidget):
 
         self.progress.setVisible(True)
         self.progress.setValue(0)
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(True)
-            self.taskbar_progress.setRange(0, 100)
-            self.taskbar_progress.setValue(0)
 
         self.set_status("Comprobando contenido extra...")
         Thread(target=self._update_alpha_thread, daemon=True).start()
@@ -372,14 +348,9 @@ class LauncherWindow(QtWidgets.QWidget):
             download_file(ALPHA_CONTENT_URL_ZIP, zip_path, self._progress_callback)
 
             self.set_status("Extrayendo Contenido Extra...")
-            if self.taskbar_progress:
-                QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 0))
 
             extract_zip(zip_path, ALPHA_CONTENT_DIR, clear=True)
             zip_path.unlink()
-
-            if self.taskbar_progress:
-                QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 100))
 
             ALPHA_CONTENT_VERSION_FILE.write_text(remote_version, encoding="utf-8")
             
@@ -442,10 +413,6 @@ class LauncherWindow(QtWidgets.QWidget):
         self.btn_delete_data.setEnabled(False)
         self.cb_extra_content.setEnabled(False)
 
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(True)
-            self.taskbar_progress.setRange(0, 100)
-            self.taskbar_progress.setValue(0)
         
         self.progress.setVisible(True)
         self.progress.setValue(0)
@@ -460,12 +427,6 @@ class LauncherWindow(QtWidgets.QWidget):
             QtCore.Qt.QueuedConnection,
             QtCore.Q_ARG(int, percent)
         )
-        if self.taskbar_progress:
-            QtCore.QMetaObject.invokeMethod(
-                self.taskbar_progress, "setValue",
-                QtCore.Qt.QueuedConnection,
-                QtCore.Q_ARG(int, percent)
-            )
 
     def _update_thread(self, download_extra: bool):
         try:
@@ -484,16 +445,9 @@ class LauncherWindow(QtWidgets.QWidget):
                 download_file(url, zip_path, self._progress_callback)
 
                 self.set_status(f"Extrayendo {zip_name}...")
-                # Poner la barra de tareas en modo "cargando" (indeterminado)
-                if self.taskbar_progress:
-                    QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 0))
 
                 # clear BUILD_DIR on first part, keep files on subsequent parts
                 extract_zip(zip_path, BUILD_DIR, clear=(idx == 0))
-
-                # Volver al modo normal para la siguiente descarga
-                if self.taskbar_progress:
-                    QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 100))
 
                 # eliminar archivo zip descargado
                 try:
@@ -508,16 +462,9 @@ class LauncherWindow(QtWidgets.QWidget):
                 download_file(ALPHA_CONTENT_URL_ZIP, zip_path, self._progress_callback)
 
                 self.set_status("Extrayendo Contenido Extra...")
-                # Poner la barra de tareas en modo "cargando" (indeterminado)
-                if self.taskbar_progress:
-                    QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 0))
 
                 extract_zip(zip_path, ALPHA_CONTENT_DIR, clear=True)
                 zip_path.unlink()
-
-                # Volver al modo normal
-                if self.taskbar_progress:
-                    QtCore.QMetaObject.invokeMethod(self.taskbar_progress, "setRange", QtCore.Qt.QueuedConnection, QtCore.Q_ARG(int, 0), QtCore.Q_ARG(int, 100))
 
                 self.set_status("Descargando versionAlphaContent.txt...")
                 version_alpha = requests.get(ALPHA_CONTENT_URL_VERSION, timeout=30).text.strip()
@@ -552,8 +499,6 @@ class LauncherWindow(QtWidgets.QWidget):
 
     @QtCore.Slot(str)
     def on_update_done(self, version):
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(False)
         self.progress.setVisible(False)
         self.set_status("Instalación completada." if not self.game_installed() else "Actualización completada.")
         
@@ -571,8 +516,6 @@ class LauncherWindow(QtWidgets.QWidget):
 
     @QtCore.Slot(str)
     def on_update_error(self, err):
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(False)
         self.progress.setVisible(False)
         self.set_status(f"Error: {err}")
         
@@ -585,8 +528,6 @@ class LauncherWindow(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def on_alpha_update_done(self):
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(False)
         self.progress.setVisible(False)
 
         self.cb_extra_content.setEnabled(True)
@@ -600,8 +541,6 @@ class LauncherWindow(QtWidgets.QWidget):
 
     @QtCore.Slot(str)
     def on_alpha_update_error(self, err):
-        if self.taskbar_progress:
-            self.taskbar_progress.setVisible(False)
         self.progress.setVisible(False)
         self.set_status(f"Error Contenido Extra: {err}")
 
