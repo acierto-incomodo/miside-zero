@@ -3,7 +3,7 @@ Cambios
 Launcher (v1.0.3):
 - NaN
 
-Juego (v0.72):
+Juego (v0.7.5.5):
 - NaN
 
 AlphaContent (v1.0.0):
